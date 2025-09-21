@@ -15,7 +15,7 @@
         // Function to fetch all reviews from the backend and render the dashboard
         async function fetchAndRenderReviews() {
             try {
-                const response = await fetch('http://127.0.0.1:5000/api/reviews');
+                const response = await fetch('http://127.0.0.1:8000/api/reviews/hostaway');
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -49,7 +49,7 @@
                 // Handle the case where the backend is not running or the request fails
                 const tableBody = document.getElementById('reviews-table-body');
                 if (tableBody) {
-                    tableBody.innerHTML = '<tr><td colspan="10" class="p-4 text-center text-red-500">Failed to load reviews. Please ensure the Python backend is running.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="10" class="p-4 text-center text-red-500">Failed to load reviews. Something went wrong.</td></tr>';
                 }
             }
         }
@@ -68,31 +68,41 @@
         function updateOverallMetrics(reviews) {
             const totalReviews = reviews.length;
             const totalRatingSum = reviews.reduce((sum, review) => sum + (review.rating * 2), 0); // Multiply by 2 because 5-star rating is based on 10-point scale
-            const avgRating = totalReviews > 0 ? (totalRatingSum / totalReviews).toFixed(1) : 0;
+            const avgRating = totalReviews > 0 ? (totalRatingSum / totalReviews).toFixed(1) / 2 : 0;
             
             document.getElementById('total-reviews-count').textContent = totalReviews;
             document.getElementById('average-rating-value').textContent = avgRating;
         }
 
-        // Handle review approval status with the backend
+        // Find the full review object and send it to the backend
         async function handleApproval(reviewId, isApproved) {
             try {
-                const response = await fetch('http://127.0.0.1:5000/api/approved_reviews', {
+                // Find the full review object from the local allReviews array
+                const reviewToSave = allReviews.find(r => r.id === reviewId);
+                if (!reviewToSave) {
+                    console.error("Review not found for ID:", reviewId);
+                    return;
+                }
+                
+                // Update the isApproved status on the review object
+                reviewToSave.isApproved = isApproved ? 1 : 0;
+                
+                const response = await fetch('http://127.0.0.1:8000/api/reviews/save', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ reviewId, isApproved }),
+                    // Send the complete review object in the request body
+                    body: JSON.stringify(reviewToSave),
                 });
+                
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                // Update local state after successful backend update
-                const reviewToUpdate = allReviews.find(r => r.id === reviewId);
-                if (reviewToUpdate) {
-                    reviewToUpdate.isApproved = isApproved ? 1 : 0;
-                }
+                
+                // The local state is already updated, just re-render the dashboard
                 applyFiltersAndSort();
+
             } catch (error) {
                 console.error("Failed to update review approval status:", error);
             }

@@ -13,9 +13,9 @@
         async function fetchApprovedReviews() {
             try {
                 // Fetch approved reviews for a specific listing
-                const listingName = '2B N1 A - 29 Shoreditch Heights';
+                const listingName = '189 Hoxton Street';
                 const encodedListingName = encodeURIComponent(listingName);
-                const response = await fetch(`http://127.0.0.1:5000/api/reviews/approved/${encodedListingName}`);
+                const response = await fetch(`http://127.0.0.1:8000/api/reviews/approved/${encodedListingName}`);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -25,12 +25,21 @@
                 const reviewsContainer = document.getElementById('reviews-container');
                 reviewsContainer.innerHTML = '';
                 
-                if (data.result.length === 0) {
+                const reviews = data.result;
+                const reviewCount = reviews.length;
+                let totalRatingSum = 0;
+                
+                if (reviewCount === 0) {
                     reviewsContainer.innerHTML = '<p class="text-gray-500 text-center">No approved reviews yet.</p>';
                 } else {
-                    data.result.forEach(review => {
-                        const ratings = review.categoryRatings.map(cat => cat.rating);
+                    reviews.forEach(review => {
+                        // Category ratings are stored as a JSON string, so we parse it
+                        const categoryRatings = JSON.parse(review.categoryRatings);
+                        const ratings = categoryRatings.map(cat => cat.rating);
                         const avgRating = ratings.length > 0 ? ratings.reduce((sum, current) => sum + current, 0) / ratings.length : 0;
+                        totalRatingSum += avgRating;
+                        
+                        // Star rating is out of 5, while category ratings are out of 10
                         const starRating = Math.round(avgRating / 2);
                         
                         const reviewCard = document.createElement('div');
@@ -54,6 +63,21 @@
                         reviewsContainer.appendChild(reviewCard);
                     });
                 }
+                
+                // Calculate and update overall rating and count
+                const overallRating = reviewCount > 0 ? (totalRatingSum / reviewCount) / 2 : 0;
+                const overallStarRating = Math.round(overallRating);
+
+                const mainRatingValue = document.getElementById('main-rating-value');
+                const mainStars = document.getElementById('main-stars');
+                const mainReviewCount = document.getElementById('main-review-count');
+                const reviewHeaderRating = document.getElementById('review-header-rating');
+
+                if (mainRatingValue) mainRatingValue.textContent = overallRating.toFixed(2);
+                if (mainStars) mainStars.textContent = '★'.repeat(overallStarRating);
+                if (mainReviewCount) mainReviewCount.textContent = `${reviewCount} reviews`;
+                if (reviewHeaderRating) reviewHeaderRating.textContent = `${overallRating.toFixed(2)} (${reviewCount})`;
+
 
             } catch (error) {
                 console.error("Failed to fetch approved reviews:", error);
@@ -111,7 +135,7 @@
             <div class="md:col-span-1 md:row-span-2 relative overflow-hidden rounded-xl h-64 md:h-[500px]">
                 <img src="./images/living-room.webp" onerror="this.onerror=null;this.src='https://placehold.co/1200x800/e0e0e0/000000?text=Living+Room';" alt="Living room and dining area" class="w-full h-full object-cover">
                 <div class="absolute top-4 right-4 bg-dark-green bg-opacity-70 backdrop-blur-sm text-white text-sm font-semibold px-3 py-1 rounded-full flex items-center space-x-1">
-                    <span class="text-white">4.85</span> <span>★</span>
+                    <span id="main-rating-value" class="text-white"></span> <span id="main-stars"></span>
                 </div>
             </div>
             <div class="hidden md:grid md:col-span-1 grid-rows-2 gap-4">
@@ -163,9 +187,9 @@
                         <span>2 bathrooms</span>
                     </div>
                     <div class="flex items-center space-x-2 text-dark-green">
-                        <span class="text-yellow-400">★★★★★</span>
-                        <span class="font-bold">4.85</span>
-                        <a href="#" class="underline font-medium">10 reviews</a>
+                        <span id="main-stars" class="text-yellow-400"></span>
+                        <span id="main-rating-value" class="font-bold"></span>
+                        <a id="main-review-count" href="#reviews-container" class="underline font-medium"></a>
                     </div>
                     <p class="text-gray-700 leading-relaxed">
                         This apartment is located in Hoxton, one of the coolest areas in London. It's a spacious unit with high-quality amenities to make your stay comfortable. The location is ideal—close to great cafes, shops, and bars, with easy access to transport. I've made sure everything is ready for you to enjoy your stay.
@@ -278,60 +302,9 @@
 
                 <!-- Reviews Section -->
                 <div class="space-y-4">
-                    <h2 class="text-2xl font-semibold text-gray-900">Reviews <span class="text-gray-500 font-normal">4.85 (10)</span></h2>
-                    <div class="space-y-6">
-                        <!-- Review 1 -->
-                        <div class="space-y-2">
-                            <div class="flex items-center space-x-2 text-yellow-400">
-                                <span class="text-xl">★★★★★</span>
-                            </div>
-                            <p class="text-sm text-gray-500">
-                                <span class="font-semibold text-gray-700">Declan</span> &bull; November 2024
-                            </p>
-                            <p class="text-gray-700">
-                                ¡Apoyo y servicio! Positive: ¡Oye, fue una estadía increíble con excelentes comodidades, habitación limpia y ordenada, excelente anfitrión, check-in y check-out flexibles. Me encanté este lugar en general, definitivamente recomendaría este alojamiento. Negative: El acondicionado...
-                                <a href="#" class="text-dark-green font-medium hover:underline">Show more</a>
-                            </p>
-                        </div>
-                        <!-- Review 2 -->
-                        <div class="space-y-2">
-                            <div class="flex items-center space-x-2 text-yellow-400">
-                                <span class="text-xl">★★★★★</span>
-                            </div>
-                            <p class="text-sm text-gray-500">
-                                <span class="font-semibold text-gray-700">Abigail</span> &bull; October 2024
-                            </p>
-                            <p class="text-gray-700">
-                                So eine gute Wohnung Positive: Der Ort ist wirklich toll! Es ist sauber, es ist friedlich, sicher und der Gastgeber ist wirklich nett und aufmerksam. Mir gefällt, wie sie die Anweisungen für alles vorbereiten haben. Vielen Dank, dass ich mich mit allen Einrichtungen auf der Unterkunft sehr wohl gefühlt habe. All...
-                                <a href="#" class="text-dark-green font-medium hover:underline">Show more</a>
-                            </p>
-                        </div>
-                        <!-- Review 3 -->
-                        <div class="space-y-2">
-                            <div class="flex items-center space-x-2 text-yellow-400">
-                                <span class="text-xl">★★★★★</span>
-                            </div>
-                            <p class="text-sm text-gray-500">
-                                <span class="font-semibold text-gray-700">Erick Svensson</span> &bull; September 2024
-                            </p>
-                            <p class="text-gray-700">
-                                Amazing place. The whole place felt friendly and nice. It was simple to get comfortable and have a good time. The location was just right if you want to live in a calm area but still be near restaurants and other things. I was really happy with how professional and polite their team was, and it made my stay even better...
-                                <a href="#" class="text-dark-green font-medium hover:underline">Show more</a>
-                            </p>
-                        </div>
-                        <!-- Review 4 -->
-                        <div class="space-y-2">
-                            <div class="flex items-center space-x-2 text-yellow-400">
-                                <span class="text-xl">★★★★★</span>
-                            </div>
-                            <p class="text-sm text-gray-500">
-                                <span class="font-semibold text-gray-700">Milena</span> &bull; September 2024
-                            </p>
-                            <p class="text-gray-700">
-                                truly enjoyed my stay Positive: The apartment boasted a beautiful interior and the host's consistent communication was on top, particularly during...
-                                <a href="#" class="text-dark-green font-medium hover:underline">Show more</a>
-                            </p>
-                        </div>
+                    <h2 class="text-2xl font-semibold text-gray-900">Reviews <span id="review-header-rating" class="text-gray-500 font-normal"></span></h2>
+                    <div id="reviews-container" class="space-y-6">
+                        <!-- Approved reviews will be dynamically inserted here by the JavaScript function -->
                     </div>
                 </div>
 
