@@ -1,0 +1,27 @@
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from models.review_orm import Base
+from utils.log import logger
+from utils.config import configuration
+
+# Create a SQLAlchemy engine
+engine = create_engine(configuration['database_url'], connect_args={"check_same_thread": False})
+
+# Create a session local class
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def get_db_connection():
+    """Provides a new SQLAlchemy database session. This is a dependency for FastAPI routes."""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+def init_db():
+    """Initializes the database and creates the 'reviews' table if it doesn't exist."""
+    logger.info("Initializing database...")
+    Base.metadata.create_all(bind=engine)
+    logger.info("Database initialization complete.")
