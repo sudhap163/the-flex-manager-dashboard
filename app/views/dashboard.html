@@ -5,15 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manager Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script>
         let allReviews = [];
         let filteredReviews = [];
+        let categoryChart = null;
+        let ratingDistributionChart = null;
 
         // Function to fetch all reviews from the backend and render the dashboard
         async function fetchAndRenderReviews() {
+            // Show loading state
+            document.getElementById('dashboard-container').setAttribute('data-status', 'loading');
+
             try {
                 const response = await fetch('http://127.0.0.1:8000/api/reviews/hostaway');
                 if (!response.ok) {
@@ -42,14 +48,16 @@
                 
                 populateFilterOptions(allReviews);
                 applyFiltersAndSort();
-                updateOverallMetrics(allReviews);
+
+                // Show content
+                document.getElementById('dashboard-container').setAttribute('data-status', 'loaded');
 
             } catch (error) {
                 console.error("Failed to fetch reviews:", error);
-                // Handle the case where the backend is not running or the request fails
-                const tableBody = document.getElementById('reviews-table-body');
-                if (tableBody) {
-                    tableBody.innerHTML = '<tr><td colspan="10" class="p-4 text-center text-red-500">Failed to load reviews. Something went wrong.</td></tr>';
+                document.getElementById('dashboard-container').setAttribute('data-status', 'error');
+                const errorMessage = document.getElementById('error-message');
+                if (errorMessage) {
+                    errorMessage.textContent = 'Failed to load reviews. Please try again later.';
                 }
             }
         }
@@ -57,34 +65,34 @@
         function populateFilterOptions(reviews) {
             const listings = [...new Set(reviews.map(r => r.listingName))];
             const listingFilter = document.getElementById('listing-filter');
+            listingFilter.innerHTML = '<option value="">All Listings</option>';
             listings.forEach(listing => {
                 const option = document.createElement('option');
                 option.value = listing;
                 option.textContent = listing;
                 listingFilter.appendChild(option);
             });
-        }
-
-        function updateOverallMetrics(reviews) {
-            const totalReviews = reviews.length;
-            const totalRatingSum = reviews.reduce((sum, review) => sum + (review.rating), 0);
-            const avgRating = totalReviews > 0 ? (totalRatingSum / totalReviews).toFixed(1) : 0;
             
-            document.getElementById('total-reviews-count').textContent = totalReviews;
-            document.getElementById('average-rating-value').textContent = avgRating;
+            const channels = [...new Set(reviews.map(r => r.channel))];
+            const channelFilter = document.getElementById('channel-filter');
+            channelFilter.innerHTML = '<option value="">All Channels</option>';
+            channels.forEach(channel => {
+                const option = document.createElement('option');
+                option.value = channel;
+                option.textContent = channel;
+                channelFilter.appendChild(option);
+            });
         }
-
+        
         // Handle review approval status with the backend
         async function handleApproval(reviewId, isApproved) {
             try {
-                // Find the full review object from the local allReviews array
                 const review = allReviews.find(r => r.id === reviewId);
                 if (!review) {
                     console.error("Review not found for ID:", reviewId);
                     return;
                 }
                 
-                // Construct a new object to match the backend's expected model
                 const reviewToSave = {
                     id: review.id,
                     publicReview: review.text,
@@ -109,13 +117,11 @@
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
-                // Update the local state for immediate visual feedback
                 const localReview = allReviews.find(r => r.id === reviewId);
                 if (localReview) {
                     localReview.isApproved = isApproved ? 1 : 0;
                 }
                 
-                // Re-render the dashboard to reflect the change
                 applyFiltersAndSort();
 
             } catch (error) {
@@ -123,7 +129,6 @@
             }
         }
         
-        // --- Manager Dashboard Logic ---
         function renderDashboard(reviewsToRender) {
             const tableBody = document.getElementById('reviews-table-body');
             if (!tableBody) return;
@@ -164,7 +169,6 @@
                 tableBody.appendChild(row);
             });
 
-            // Add event listeners for the new buttons
             document.querySelectorAll('.approve-btn').forEach(button => {
                 button.addEventListener('click', (event) => {
                     const reviewId = event.target.dataset.reviewId;
@@ -174,18 +178,162 @@
             });
         }
         
+        function renderCategoryRatingsChart(reviews) {
+            const ctx = document.getElementById('reviewsChart').getContext('2d');
+            
+            // Calculate average ratings for each category
+            const categories = ['cleanliness', 'communication', 'respect_house_rules'];
+            const categoryAverages = categories.map(cat => {
+                const totalRating = reviews.reduce((sum, review) => {
+                    const categoryRating = review.categoryRatings.find(c => c.category === cat);
+                    return sum + (categoryRating ? categoryRating.rating : 0);
+                }, 0);
+                return reviews.length > 0 ? (totalRating / reviews.length / 2).toFixed(1) : 0;
+            });
+
+            const data = {
+                labels: ['Cleanliness', 'Communication', 'House Rules'],
+                datasets: [{
+                    label: 'Average Rating',
+                    data: categoryAverages,
+                    backgroundColor: ['#1a4f4d', '#3f826d', '#6ab3a4'],
+                    borderRadius: 8,
+                }]
+            };
+
+            const options = {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 5,
+                        grid: {
+                            color: '#e5e7eb',
+                        },
+                        ticks: {
+                            color: '#6b7280'
+                        }
+                    },
+                    x: {
+                         grid: {
+                            display: false,
+                        },
+                        ticks: {
+                            color: '#6b7280'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                    }
+                },
+                
+            };
+            
+            if (categoryChart) {
+                categoryChart.destroy();
+            }
+
+            categoryChart = new Chart(ctx, {
+                type: 'bar',
+                data: data,
+                options: options
+            });
+        }
+
+        function renderRatingDistributionChart(reviews) {
+            const ctx = document.getElementById('ratingDistributionChart').getContext('2d');
+            const ratingCounts = [0, 0, 0, 0, 0]; // Index 0 for 1 star, 1 for 2 stars, etc.
+            
+            reviews.forEach(review => {
+                if (review.rating >= 1 && review.rating <= 5) {
+                    ratingCounts[review.rating - 1]++;
+                }
+            });
+
+            const data = {
+                labels: ['1 Star', '2 Stars', '3 Stars', '4 Stars', '5 Stars'],
+                datasets: [{
+                    label: 'Number of Reviews',
+                    data: ratingCounts,
+                    backgroundColor: ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e'],
+                    borderRadius: 8,
+                }]
+            };
+
+            const options = {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#e5e7eb',
+                        },
+                        ticks: {
+                            color: '#6b7280'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false,
+                        },
+                        ticks: {
+                            color: '#6b7280'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                    }
+                },
+            };
+
+            if (ratingDistributionChart) {
+                ratingDistributionChart.destroy();
+            }
+            ratingDistributionChart = new Chart(ctx, {
+                type: 'bar',
+                data: data,
+                options: options
+            });
+        }
+        
         window.applyFiltersAndSort = () => {
             const sortOption = document.getElementById('sort-by').value;
             const ratingFilter = document.getElementById('rating-filter').value;
             const typeFilter = document.getElementById('type-filter').value;
             const listingFilter = document.getElementById('listing-filter').value;
-            
+            const channelFilter = document.getElementById('channel-filter').value;
+            const startDate = document.getElementById('start-date-filter').value;
+            const endDate = document.getElementById('end-date-filter').value;
+            const approvalStatusFilter = document.getElementById('approval-status-filter').value;
+
             // Apply filters first
             filteredReviews = allReviews.filter(review => {
                 const matchesRating = ratingFilter === '' || review.rating.toString() === ratingFilter;
                 const matchesType = typeFilter === '' || review.type === typeFilter;
                 const matchesListing = listingFilter === '' || review.listingName === listingFilter;
-                return matchesRating && matchesType && matchesListing;
+                const matchesChannel = channelFilter === '' || review.channel === channelFilter;
+                const matchesApprovalStatus = approvalStatusFilter === '' || (approvalStatusFilter === 'approved' && review.isApproved === 1) || (approvalStatusFilter === 'pending' && review.isApproved === 0);
+                
+                const reviewDate = new Date(review.date);
+                const matchesDateRange = (!startDate || reviewDate >= new Date(startDate)) && (!endDate || reviewDate <= new Date(endDate));
+
+                return matchesRating && matchesType && matchesListing && matchesChannel && matchesDateRange && matchesApprovalStatus;
             });
 
             // Then apply sorting
@@ -215,6 +363,32 @@
             });
 
             renderDashboard(filteredReviews);
+            renderCategoryRatingsChart(filteredReviews);
+            renderRatingDistributionChart(filteredReviews);
+
+            // Update the single metrics card based on the selected listing
+            const metricsCardTitle = document.getElementById('metrics-title');
+            const metricsCount = document.getElementById('metrics-count');
+            const metricsRating = document.getElementById('metrics-rating');
+
+            if (listingFilter) {
+                const listingReviews = allReviews.filter(r => r.listingName === listingFilter);
+                const totalReviews = listingReviews.length;
+                const totalRatingSum = listingReviews.reduce((sum, review) => sum + (review.rating), 0);
+                const avgRating = totalReviews > 0 ? (totalRatingSum / totalReviews).toFixed(1) : 0;
+                
+                metricsCardTitle.textContent = "Reviews for Listing";
+                metricsCount.textContent = totalReviews;
+                metricsRating.textContent = avgRating;
+            } else {
+                const totalReviews = allReviews.length;
+                const totalRatingSum = allReviews.reduce((sum, review) => sum + (review.rating), 0);
+                const avgRating = totalReviews > 0 ? (totalRatingSum / totalReviews).toFixed(1) : 0;
+                
+                metricsCardTitle.textContent = "Total Reviews";
+                metricsCount.textContent = totalReviews;
+                metricsRating.textContent = avgRating;
+            }
         }
 
         window.showFullReview = (reviewId) => {
@@ -246,6 +420,38 @@
         .bg-dark-green {
             background-color: #1a4f4d;
         }
+        .loading-container[data-status="loading"] .loading-content {
+            display: flex;
+        }
+        .loading-container[data-status="loading"] .loaded-content {
+            display: none;
+        }
+        .loading-container[data-status="loaded"] .loading-content,
+        .loading-container[data-status="error"] .loading-content {
+            display: none;
+        }
+        .loading-container[data-status="loaded"] .loaded-content {
+            display: block;
+        }
+        .loading-container[data-status="error"] .error-content {
+            display: block;
+        }
+        .loading-container[data-status="loading"] .error-content,
+        .loading-container[data-status="loaded"] .error-content {
+            display: none;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-top: 4px solid #1a4f4d;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -269,89 +475,142 @@
     </header>
 
     <!-- Manager Dashboard View -->
-    <div id="dashboard-page" class="p-8">
-        <main class="max-w-7xl mx-auto space-y-8">
-            <h1 class="text-4xl font-bold text-gray-900">Manager Dashboard</h1>
-            <p class="text-gray-600">Manage and approve reviews for public display.</p>
+    <div id="dashboard-container" class="p-8 loading-container" data-status="loading">
+        <!-- Loading State -->
+        <div class="loading-content text-center py-20 flex flex-col items-center justify-center space-y-4">
+            <div class="loading-spinner"></div>
+            <p class="text-lg text-gray-600 font-medium">Loading reviews...</p>
+        </div>
+        
+        <!-- Error State -->
+        <div class="error-content text-center py-20">
+            <p id="error-message" class="text-lg text-red-500 font-medium">Failed to load reviews. Please try again later.</p>
+        </div>
 
-            <!-- Overall Performance Metrics -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <p class="text-gray-500 text-sm font-medium">Total Reviews</p>
-                    <p id="total-reviews-count" class="text-3xl font-bold text-gray-900 mt-1">0</p>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <p class="text-gray-500 text-sm font-medium">Average Overall Rating</p>
-                    <p id="average-rating-value" class="text-3xl font-bold text-gray-900 mt-1">0.0</p>
-                </div>
-                <!-- You could add more here, e.g., reviews per channel -->
-            </div>
+        <!-- Loaded Content -->
+        <div class="loaded-content">
+            <main class="max-w-7xl mx-auto space-y-8">
+                <h1 class="text-4xl font-bold text-gray-900">Manager Dashboard</h1>
+                <p class="text-gray-600">Manage and approve reviews for public display.</p>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <!-- Sort by -->
-                <div class="flex flex-col">
-                    <label for="sort-by" class="text-sm font-medium text-gray-700">Sort by Rating</label>
-                    <select id="sort-by" onchange="applyFiltersAndSort()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-dark-green focus:ring focus:ring-dark-green focus:ring-opacity-50">
-                        <option value="overall">Overall Rating</option>
-                        <option value="cleanliness">Cleanliness</option>
-                        <option value="communication">Communication</option>
-                        <option value="respect_house_rules">Respect House Rules</option>
-                    </select>
-                </div>
-                <!-- Filter by Rating -->
-                <div class="flex flex-col">
-                    <label for="rating-filter" class="text-sm font-medium text-gray-700">Filter by Rating</label>
-                    <select id="rating-filter" onchange="applyFiltersAndSort()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-dark-green focus:ring focus:ring-dark-green focus:ring-opacity-50">
-                        <option value="">All Ratings</option>
-                        <option value="5">5 Stars</option>
-                        <option value="4">4 Stars</option>
-                        <option value="3">3 Stars</option>
-                        <option value="2">2 Stars</option>
-                        <option value="1">1 Star</option>
-                    </select>
-                </div>
-                <!-- Filter by Type -->
-                <div class="flex flex-col">
-                    <label for="type-filter" class="text-sm font-medium text-gray-700">Filter by Review Type</label>
-                    <select id="type-filter" onchange="applyFiltersAndSort()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-dark-green focus:ring focus:ring-dark-green focus:ring-opacity-50">
-                        <option value="">All Types</option>
-                        <option value="host-to-guest">Host-to-Guest</option>
-                        <option value="guest-to-host">Guest-to-Host</option>
-                    </select>
-                </div>
-                <!-- Filter by Listing -->
-                <div class="flex flex-col">
-                    <label for="listing-filter" class="text-sm font-medium text-gray-700">Filter by Listing</label>
-                    <select id="listing-filter" onchange="applyFiltersAndSort()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-dark-green focus:ring focus:ring-dark-green focus:ring-opacity-50">
-                        <option value="">All Listings</option>
-                    </select>
-                </div>
-            </div>
+                <!-- Metrics and Trends -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Dynamic Metrics Card -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <p id="metrics-title" class="text-gray-500 text-sm font-medium">Total Reviews</p>
+                        <p id="metrics-count" class="text-3xl font-bold text-gray-900 mt-1">0</p>
+                        <p id="metrics-rating-label" class="text-gray-500 text-sm font-medium mt-4">Average Overall Rating</p>
+                        <p id="metrics-rating" class="text-3xl font-bold text-gray-900 mt-1">0.0</p>
+                    </div>
+                    
+                    <!-- Trends Charts -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 col-span-1 md:col-span-2 lg:col-span-1">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Category Ratings</h3>
+                        <div style="height: 200px;">
+                            <canvas id="reviewsChart"></canvas>
+                        </div>
+                    </div>
 
-            <!-- Reviews Table -->
-            <div class="bg-white rounded-lg shadow-md overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Reviewer</th>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Listing</th>
-                            <th scope="col" class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Overall Rating</th>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Channel</th>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Review</th>
-                            <th scope="col" class="px-4 py-3 text-center hidden md:table-cell text-xs font-semibold text-gray-500 uppercase tracking-wider">Cleanliness</th>
-                            <th scope="col" class="px-4 py-3 text-center hidden md:table-cell text-xs font-semibold text-gray-500 uppercase tracking-wider">Communication</th>
-                            <th scope="col" class="px-4 py-3 text-center hidden lg:table-cell text-xs font-semibold text-gray-500 uppercase tracking-wider">House Rules</th>
-                            <th scope="col" class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="reviews-table-body" class="bg-white divide-y divide-gray-200">
-                        <!-- Reviews will be dynamically inserted here -->
-                    </tbody>
-                </table>
-            </div>
-        </main>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 col-span-1 md:col-span-2 lg:col-span-1">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Rating Distribution</h3>
+                        <div style="height: 200px;">
+                            <canvas id="ratingDistributionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Filter by Listing -->
+                    <div class="flex flex-col">
+                        <label for="listing-filter" class="text-sm font-medium text-gray-700">Listing</label>
+                        <select id="listing-filter" onchange="applyFiltersAndSort()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-dark-green focus:ring focus:ring-dark-green focus:ring-opacity-50">
+                            <option value="">All Listings</option>
+                        </select>
+                    </div>
+                    <!-- Filter by Channel -->
+                    <div class="flex flex-col">
+                        <label for="channel-filter" class="text-sm font-medium text-gray-700">Channel</label>
+                        <select id="channel-filter" onchange="applyFiltersAndSort()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-dark-green focus:ring focus:ring-dark-green focus:ring-opacity-50">
+                            <option value="">All Channels</option>
+                        </select>
+                    </div>
+                    <!-- Filter by Rating -->
+                    <div class="flex flex-col">
+                        <label for="rating-filter" class="text-sm font-medium text-gray-700">Rating</label>
+                        <select id="rating-filter" onchange="applyFiltersAndSort()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-dark-green focus:ring focus:ring-dark-green focus:ring-opacity-50">
+                            <option value="">All Ratings</option>
+                            <option value="5">5 Stars</option>
+                            <option value="4">4 Stars</option>
+                            <option value="3">3 Stars</option>
+                            <option value="2">2 Stars</option>
+                            <option value="1">1 Star</option>
+                        </select>
+                    </div>
+                    <!-- Filter by Type -->
+                    <div class="flex flex-col">
+                        <label for="type-filter" class="text-sm font-medium text-gray-700">Review Type</label>
+                        <select id="type-filter" onchange="applyFiltersAndSort()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-dark-green focus:ring focus:ring-dark-green focus:ring-opacity-50">
+                            <option value="">All Types</option>
+                            <option value="host-to-guest">Host-to-Guest</option>
+                            <option value="guest-to-host">Guest-to-Host</option>
+                        </select>
+                    </div>
+                    <!-- Filter by Date Range -->
+                    <div class="flex flex-col">
+                        <label for="start-date-filter" class="text-sm font-medium text-gray-700">Start Date</label>
+                        <input type="date" id="start-date-filter" onchange="applyFiltersAndSort()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-dark-green focus:ring focus:ring-dark-green focus:ring-opacity-50">
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="end-date-filter" class="text-sm font-medium text-gray-700">End Date</label>
+                        <input type="date" id="end-date-filter" onchange="applyFiltersAndSort()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-dark-green focus:ring focus:ring-dark-green focus:ring-opacity-50">
+                    </div>
+                    <!-- Sort by -->
+                    <div class="flex flex-col">
+                        <label for="sort-by" class="text-sm font-medium text-gray-700">Sort By</label>
+                        <select id="sort-by" onchange="applyFiltersAndSort()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-dark-green focus:ring focus:ring-dark-green focus:ring-opacity-50">
+                            <option value="overall">Overall Rating</option>
+                            <option value="cleanliness">Cleanliness</option>
+                            <option value="communication">Communication</option>
+                            <option value="respect_house_rules">House Rules</option>
+                        </select>
+                    </div>
+                    <!-- Filter by Approval Status -->
+                    <div class="flex flex-col">
+                        <label for="approval-status-filter" class="text-sm font-medium text-gray-700">Approval Status</label>
+                        <select id="approval-status-filter" onchange="applyFiltersAndSort()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-dark-green focus:ring focus:ring-dark-green focus:ring-opacity-50">
+                            <option value="">All Reviews</option>
+                            <option value="approved">Approved</option>
+                            <option value="pending">Pending</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Reviews Table -->
+                <div class="bg-white rounded-lg shadow-md overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Reviewer</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Listing</th>
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Overall Rating</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Channel</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Review</th>
+                                <th scope="col" class="px-4 py-3 text-center hidden md:table-cell text-xs font-semibold text-gray-500 uppercase tracking-wider">Cleanliness</th>
+                                <th scope="col" class="px-4 py-3 text-center hidden md:table-cell text-xs font-semibold text-gray-500 uppercase tracking-wider">Communication</th>
+                                <th scope="col" class="px-4 py-3 text-center hidden lg:table-cell text-xs font-semibold text-gray-500 uppercase tracking-wider">House Rules</th>
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reviews-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Reviews will be dynamically inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
     </div>
 
     <!-- Review Modal -->
