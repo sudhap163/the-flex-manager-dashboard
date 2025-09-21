@@ -67,11 +67,11 @@
 
         function updateOverallMetrics(reviews) {
             const totalReviews = reviews.length;
-            const totalRatingSum = reviews.reduce((sum, review) => sum + (review.rating * 2), 0); // Multiply by 2 because 5-star rating is based on 10-point scale
+            const totalRatingSum = reviews.reduce((sum, review) => sum + (review.rating), 0);
             const avgRating = totalReviews > 0 ? (totalRatingSum / totalReviews).toFixed(1) : 0;
             
             document.getElementById('total-reviews-count').textContent = totalReviews;
-            document.getElementById('average-rating-value').textContent = avgRating / 2;
+            document.getElementById('average-rating-value').textContent = avgRating;
         }
 
         // Handle review approval status with the backend
@@ -131,14 +131,14 @@
                     <td class="p-4">${review.channel}</td>
                     <td class="p-4">${review.type}</td>
                     <td class="p-4">${review.date.toISOString().split('T')[0]}</td>
-                    <td class="p-4 text-sm max-w-xs overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer hover:underline" onclick="showFullReview('${review.id}')">${review.text}</td>
-                    <td class="p-4 text-center">
+                    <td class="p-4 text-sm max-w-xs md:max-w-md break-words">${review.text}</td>
+                    <td class="p-4 text-center hidden md:table-cell">
                         <span class="text-xs text-yellow-500">${'★'.repeat(review.categoryRatings.find(c => c.category === 'cleanliness').rating / 2)}</span>
                     </td>
-                    <td class="p-4 text-center">
+                    <td class="p-4 text-center hidden md:table-cell">
                         <span class="text-xs text-yellow-500">${'★'.repeat(review.categoryRatings.find(c => c.category === 'communication').rating / 2)}</span>
                     </td>
-                    <td class="p-4 text-center">
+                    <td class="p-4 text-center hidden lg:table-cell">
                         <span class="text-xs text-yellow-500">${'★'.repeat(review.categoryRatings.find(c => c.category === 'respect_house_rules').rating / 2)}</span>
                     </td>
                     <td class="p-4 text-center">
@@ -183,8 +183,8 @@
                         bValue = b.rating;
                         break;
                     case 'cleanliness':
-                        aValue = a.categoryRatings.find(c => c.category === 'cleaniness').rating;
-                        bValue = b.categoryRatings.find(c => c.category === 'cleaniness').rating;
+                        aValue = a.categoryRatings.find(c => c.category === 'cleanliness').rating;
+                        bValue = b.categoryRatings.find(c => c.category === 'cleanliness').rating;
                         break;
                     case 'communication':
                         aValue = a.categoryRatings.find(c => c.category === 'communication').rating;
@@ -315,7 +315,7 @@
             </div>
 
             <!-- Reviews Table -->
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="bg-white rounded-lg shadow-md overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
@@ -325,10 +325,10 @@
                             <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Channel</th>
                             <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
                             <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Review Text</th>
-                            <th scope="col" class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Cleanliness</th>
-                            <th scope="col" class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Communication</th>
-                            <th scope="col" class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">House Rules</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Review</th>
+                            <th scope="col" class="px-4 py-3 text-center hidden md:table-cell text-xs font-semibold text-gray-500 uppercase tracking-wider">Cleanliness</th>
+                            <th scope="col" class="px-4 py-3 text-center hidden md:table-cell text-xs font-semibold text-gray-500 uppercase tracking-wider">Communication</th>
+                            <th scope="col" class="px-4 py-3 text-center hidden lg:table-cell text-xs font-semibold text-gray-500 uppercase tracking-wider">House Rules</th>
                             <th scope="col" class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
                         </tr>
                     </thead>

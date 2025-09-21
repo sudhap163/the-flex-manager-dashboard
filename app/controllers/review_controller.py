@@ -16,9 +16,9 @@ def get_all_reviews(session: Session = Depends(get_db_connection)):
     return {"status": "success", "result": all_reviews}
 
 @router.get("/reviews/hostaway", response_model=Dict[str, Any])
-def get_hostaway_reviews():
+def get_hostaway_reviews(session: Session = Depends(get_db_connection)):
     """Returns list of reviews from Hostaway"""
-    hostaway_reviews = review_service.get_hostaway_reviews()
+    hostaway_reviews = review_service.get_hostaway_reviews(session)
     return {"status": "success", "result": hostaway_reviews}
 
 @router.get("/reviews/approved/{listing_name}", response_model=Dict[str, Any])

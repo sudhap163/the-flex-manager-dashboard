@@ -30,8 +30,27 @@ def get_all_approved_reviews(session: Session) -> List[Dict[str, Any]]:
         logger.error(f"Database error fetching approved reviews: {e}")
         return []
 
-def get_hostaway_reviews() -> List[Dict[str, Any]]:
-    """Fetches reviews from Hostaway."""
+def get_all_reviews_from_db(session: Session) -> List[Dict[str, Any]]:
+    """Fetches all reviews from the database using SQLAlchemy."""
+    logger.debug("Fetching all reviews from the database")
+    try:
+        reviews = session.query(ReviewORM).all()
+        
+        reviews_list = []
+        for review in reviews:
+            review_dict = review.__dict__
+            review_dict.pop('_sa_instance_state', None)
+            reviews_list.append(review_dict)
+
+        logger.info(f"Found {len(reviews_list)} reviews in the database.")
+        return reviews_list
+    except SQLAlchemyError as e:
+        logger.error(f"Database error fetching reviews: {e}")
+        return []
+
+
+def get_hostaway_reviews(session: Session) -> List[Dict[str, Any]]:
+    """Fetches reviews from Hostaway and checks approval status against the database."""
 
     # 1. Get access token
     token_headers = {
@@ -79,10 +98,21 @@ def get_hostaway_reviews() -> List[Dict[str, Any]]:
     if not hostaway_review_data:
         mock_data = get_mocked_hostaway_data()
         logger.debug(f"Mocked Hostaway reviews: {mock_data}")
-        hostaway_review_data = parse_hostaway_review_data(mock_data)
+        hostaway_review_data = mock_data
 
-    return hostaway_review_data
-    
+    # 3. Parse and check against database
+    parsed_reviews = parse_hostaway_review_data(hostaway_review_data)
+    db_reviews = get_all_reviews_from_db(session)
+    db_review_ids = {r['id'] for r in db_reviews}
+
+    for review in parsed_reviews:
+        if review.id in db_review_ids:
+            review.isApproved = 1
+        else:
+            review.isApproved = 0
+            
+    return [review.model_dump() for review in parsed_reviews]
+
 def get_mocked_hostaway_data() -> List[Dict[str, Any]]:
     return DUMMY_HOSTAWAY_REVIEW_DATA.get("result")
 
@@ -101,7 +131,7 @@ def parse_hostaway_review_data(reviews_list: List[Dict[str, Any]]) -> List[Revie
                 "categoryRatings": review_data.get("reviewCategory"),
                 "listingName": review_data.get("listingName"),
                 "type": review_data.get("type"),
-                "isApproved": 0,
+                "isApproved": 0, # Default to 0, will be updated later
                 "channel": "Hostaway"
             }
 
