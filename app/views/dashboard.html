@@ -75,25 +75,33 @@
         }
 
         // Handle review approval status with the backend
-        // MODIFIED: Find the full review object and send it to the backend
         async function handleApproval(reviewId, isApproved) {
             try {
                 // Find the full review object from the local allReviews array
-                const reviewToSave = allReviews.find(r => r.id === reviewId);
-                if (!reviewToSave) {
+                const review = allReviews.find(r => r.id === reviewId);
+                if (!review) {
                     console.error("Review not found for ID:", reviewId);
                     return;
                 }
                 
-                // Update the isApproved status on the review object
-                reviewToSave.isApproved = isApproved ? 1 : 0;
+                // Construct a new object to match the backend's expected model
+                const reviewToSave = {
+                    id: review.id,
+                    publicReview: review.text,
+                    reviewerName: review.reviewerName,
+                    listingName: review.listingName,
+                    channel: review.channel,
+                    submittedAt: review.date.toISOString(),
+                    type: review.type,
+                    categoryRatings: review.categoryRatings,
+                    isApproved: isApproved ? 1 : 0,
+                };
                 
                 const response = await fetch('http://127.0.0.1:8000/api/reviews/save', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    // Send the complete review object in the request body
                     body: JSON.stringify(reviewToSave),
                 });
                 
@@ -101,7 +109,13 @@
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
-                // The local state is already updated, just re-render the dashboard
+                // Update the local state for immediate visual feedback
+                const localReview = allReviews.find(r => r.id === reviewId);
+                if (localReview) {
+                    localReview.isApproved = isApproved ? 1 : 0;
+                }
+                
+                // Re-render the dashboard to reflect the change
                 applyFiltersAndSort();
 
             } catch (error) {
