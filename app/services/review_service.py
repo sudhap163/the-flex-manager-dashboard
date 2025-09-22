@@ -107,9 +107,9 @@ def get_hostaway_reviews(session: Session) -> List[Dict[str, Any]]:
 
     for review in parsed_reviews:
         if review.id in db_review_ids:
-            review.isApproved = 1
+            review.is_approved = 1
         else:
-            review.isApproved = 0
+            review.is_approved = 0
             
     return [review.model_dump() for review in parsed_reviews]
 
@@ -125,13 +125,13 @@ def parse_hostaway_review_data(reviews_list: List[Dict[str, Any]]) -> List[Revie
             # Manually map fields to match the Pydantic model
             mapped_data = {
                 "id": review_data.get("id"),
-                "publicReview": review_data.get("publicReview"),
-                "reviewerName": review_data.get("guestName"),
-                "submittedAt": review_data.get("submittedAt"),
-                "categoryRatings": review_data.get("reviewCategory"),
-                "listingName": review_data.get("listingName"),
+                "public_review": review_data.get("public_review"),
+                "reviewer_name": review_data.get("guestName"),
+                "submitted_at": review_data.get("submitted_at"),
+                "category_ratings": review_data.get("reviewCategory"),
+                "listing_name": review_data.get("listing_name"),
                 "type": review_data.get("type"),
-                "isApproved": 0, # Default to 0, will be updated later
+                "is_approved": 0, # Default to 0, will be updated later
                 "channel": "Hostaway"
             }
 
@@ -150,8 +150,8 @@ def get_approved_reviews_by_listing(listing_name: str, session: Session) -> List
     logger.debug(f"Fetching approved reviews for listing: {listing_name}")
     try:
         reviews = session.query(ReviewORM).filter(
-            ReviewORM.isApproved == 1,
-            ReviewORM.listingName == listing_name
+            ReviewORM.is_approved == 1,
+            ReviewORM.listing_name == listing_name
         ).all()
         
         reviews_list = []
@@ -174,14 +174,14 @@ def save_approved_review_to_db(review: Review, session: Session) -> int:
     try:
         review_orm = ReviewORM(
             id=review.id,
-            publicReview=review.publicReview,
-            reviewerName=review.reviewerName,
-            submittedAt=review.submittedAt,
-            categoryRatings=json.dumps([r.model_dump() for r in review.categoryRatings]),
-            listingName=review.listingName,
+            public_review=review.public_review,
+            reviewer_name=review.reviewer_name,
+            submitted_at=review.submitted_at,
+            category_ratings=json.dumps([r.model_dump() for r in review.category_ratings]),
+            listing_name=review.listing_name,
             channel=review.channel,
             type=review.type,
-            isApproved=1
+            is_approved=1
         )
 
         logger.debug(f"Review ORM: {review_orm}")

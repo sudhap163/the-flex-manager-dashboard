@@ -13,8 +13,8 @@
         async function fetchApprovedReviews() {
             try {
                 // Fetch approved reviews for a specific listing
-                const listingName = '189 Hoxton Street';
-                const encodedListingName = encodeURIComponent(listingName);
+                const listing_name = '189 Hoxton Street';
+                const encodedListingName = encodeURIComponent(listing_name);
                 const response = await fetch(`/api/reviews/approved/${encodedListingName}`);
 
                 if (!response.ok) {
@@ -34,8 +34,8 @@
                 } else {
                     reviews.forEach(review => {
                         // Category ratings are stored as a JSON string, so we parse it
-                        const categoryRatings = JSON.parse(review.categoryRatings);
-                        const ratings = categoryRatings.map(cat => cat.rating);
+                        const category_ratings = JSON.parse(review.category_ratings);
+                        const ratings = category_ratings.map(cat => cat.rating);
                         const avgRating = ratings.length > 0 ? ratings.reduce((sum, current) => sum + current, 0) / ratings.length : 0;
                         totalRatingSum += avgRating;
                         
@@ -47,18 +47,18 @@
                         reviewCard.innerHTML = `
                             <div class="flex items-center mb-2">
                                 <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-700 mr-4">
-                                    ${review.reviewerName.charAt(0)}
+                                    ${review.reviewer_name.charAt(0)}
                                 </div>
                                 <div>
-                                    <p class="font-semibold text-gray-900">${review.reviewerName}</p>
-                                    <p class="text-xs text-gray-500">${new Date(review.submittedAt).toLocaleDateString()}</p>
+                                    <p class="font-semibold text-gray-900">${review.reviewer_name}</p>
+                                    <p class="text-xs text-gray-500">${new Date(review.submitted_at).toLocaleDateString()}</p>
                                 </div>
                             </div>
                             <div class="flex items-center text-yellow-500 mb-2">
                                 ${'★'.repeat(starRating)}
                                 <span class="ml-2 text-gray-700 text-sm">(${starRating} / 5)</span>
                             </div>
-                            <p class="text-gray-700">${review.publicReview}</p>
+                            <p class="text-gray-700">${review.public_review}</p>
                         `;
                         reviewsContainer.appendChild(reviewCard);
                     });

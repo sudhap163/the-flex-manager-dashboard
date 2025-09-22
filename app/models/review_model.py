@@ -7,15 +7,11 @@ class CategoryRating(BaseModel):
 
 class Review(BaseModel):
     id: str
-    publicReview: str
-    reviewerName: str
-    listingName: str
+    public_review: str
+    reviewer_name: str
+    listing_name: str
     channel: str
-    submittedAt: str
+    submitted_at: str
     type: str
-    categoryRatings: List[CategoryRating]
-    isApproved: int
-
-# class UpdateReviewStatus(BaseModel):
-#     reviewId: str = Field(alias='reviewId')
-#     isApproved: bool = Field(alias='isApproved')
+    category_ratings: List[CategoryRating]
+    is_approved: int

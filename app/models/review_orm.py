@@ -9,11 +9,11 @@ class ReviewORM(Base):
     """SQLAlchemy ORM model for the 'reviews' table."""
     __tablename__ = 'reviews'
     id = Column(String, primary_key=True)
-    publicReview = Column(String)
-    reviewerName = Column(String)
-    submittedAt = Column(String)
-    categoryRatings = Column(JSON)
-    listingName = Column(String)
+    public_review = Column(String)
+    reviewer_name = Column(String)
+    submitted_at = Column(String)
+    category_ratings = Column(JSON)
+    listing_name = Column(String)
     channel = Column(String)
     type = Column(String)
-    isApproved = Column(Integer)
+    is_approved = Column(Integer)

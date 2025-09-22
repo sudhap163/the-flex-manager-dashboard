@@ -29,20 +29,20 @@
                 
                 // Process the fetched data to match the expected format for rendering
                 allReviews = data.result.map(item => {
-                    const ratings = item.categoryRatings.map(cat => cat.rating);
+                    const ratings = item.category_ratings.map(cat => cat.rating);
                     const avgRating = ratings.length > 0 ? ratings.reduce((sum, current) => sum + current, 0) / ratings.length : 0;
                     
                     return {
                         id: item.id.toString(),
-                        listingName: item.listingName,
-                        reviewerName: item.reviewerName,
+                        listing_name: item.listing_name,
+                        reviewer_name: item.reviewer_name,
                         rating: Math.round(avgRating / 2),
                         channel: item.channel,
                         type: item.type,
-                        date: new Date(item.submittedAt),
-                        text: item.publicReview,
-                        categoryRatings: item.categoryRatings,
-                        isApproved: item.isApproved
+                        date: new Date(item.submitted_at),
+                        text: item.public_review,
+                        category_ratings: item.category_ratings,
+                        is_approved: item.is_approved
                     };
                 });
                 
@@ -63,7 +63,7 @@
         }
 
         function populateFilterOptions(reviews) {
-            const listings = [...new Set(reviews.map(r => r.listingName))];
+            const listings = [...new Set(reviews.map(r => r.listing_name))];
             const listingFilter = document.getElementById('listing-filter');
             listingFilter.innerHTML = '<option value="">All Listings</option>';
             listings.forEach(listing => {
@@ -85,7 +85,7 @@
         }
         
         // Handle review approval status with the backend
-        async function handleApproval(reviewId, isApproved) {
+        async function handleApproval(reviewId, is_approved) {
             try {
                 const review = allReviews.find(r => r.id === reviewId);
                 if (!review) {
@@ -95,14 +95,14 @@
                 
                 const reviewToSave = {
                     id: review.id,
-                    publicReview: review.text,
-                    reviewerName: review.reviewerName,
-                    listingName: review.listingName,
+                    public_review: review.text,
+                    reviewer_name: review.reviewer_name,
+                    listing_name: review.listing_name,
                     channel: review.channel,
-                    submittedAt: review.date.toISOString(),
+                    submitted_at: review.date.toISOString(),
                     type: review.type,
-                    categoryRatings: review.categoryRatings,
-                    isApproved: isApproved ? 1 : 0,
+                    category_ratings: review.category_ratings,
+                    is_approved: is_approved ? 1 : 0,
                 };
                 
                 const response = await fetch('/api/reviews/save', {
@@ -119,7 +119,7 @@
                 
                 const localReview = allReviews.find(r => r.id === reviewId);
                 if (localReview) {
-                    localReview.isApproved = isApproved ? 1 : 0;
+                    localReview.is_approved = is_approved ? 1 : 0;
                 }
                 
                 applyFiltersAndSort();
@@ -140,29 +140,29 @@
             }
 
             reviewsToRender.forEach(review => {
-                const isApproved = review.isApproved === 1;
+                const is_approved = review.is_approved === 1;
                 const row = document.createElement('tr');
-                row.className = `border-b hover:bg-gray-50 transition-colors ${isApproved ? 'bg-green-50' : ''}`;
+                row.className = `border-b hover:bg-gray-50 transition-colors ${is_approved ? 'bg-green-50' : ''}`;
                 row.innerHTML = `
-                    <td class="p-4">${review.reviewerName}</td>
-                    <td class="p-4">${review.listingName}</td>
+                    <td class="p-4">${review.reviewer_name}</td>
+                    <td class="p-4">${review.listing_name}</td>
                     <td class="p-4 text-center text-yellow-500">${'★'.repeat(review.rating)}</td>
                     <td class="p-4">${review.channel}</td>
                     <td class="p-4">${review.type}</td>
                     <td class="p-4">${review.date.toISOString().split('T')[0]}</td>
                     <td class="p-4 text-sm max-w-xs md:max-w-md break-words">${review.text}</td>
                     <td class="p-4 text-center hidden md:table-cell">
-                        <span class="text-xs text-yellow-500">${'★'.repeat(review.categoryRatings.find(c => c.category === 'cleanliness').rating / 2)}</span>
+                        <span class="text-xs text-yellow-500">${'★'.repeat(review.category_ratings.find(c => c.category === 'cleanliness').rating / 2)}</span>
                     </td>
                     <td class="p-4 text-center hidden md:table-cell">
-                        <span class="text-xs text-yellow-500">${'★'.repeat(review.categoryRatings.find(c => c.category === 'communication').rating / 2)}</span>
+                        <span class="text-xs text-yellow-500">${'★'.repeat(review.category_ratings.find(c => c.category === 'communication').rating / 2)}</span>
                     </td>
                     <td class="p-4 text-center hidden lg:table-cell">
-                        <span class="text-xs text-yellow-500">${'★'.repeat(review.categoryRatings.find(c => c.category === 'respect_house_rules').rating / 2)}</span>
+                        <span class="text-xs text-yellow-500">${'★'.repeat(review.category_ratings.find(c => c.category === 'respect_house_rules').rating / 2)}</span>
                     </td>
                     <td class="p-4 text-center">
-                        <button class="approve-btn px-4 py-2 rounded-full font-medium transition-colors text-white ${isApproved ? 'bg-gray-400' : 'bg-dark-green'}" data-review-id="${review.id}" data-is-approved="${isApproved}">
-                            ${isApproved ? 'Approved' : 'Approve'}
+                        <button class="approve-btn px-4 py-2 rounded-full font-medium transition-colors text-white ${is_approved ? 'bg-gray-400' : 'bg-dark-green'}" data-review-id="${review.id}" data-is-approved="${is_approved}">
+                            ${is_approved ? 'Approved' : 'Approve'}
                         </button>
                     </td>
                 `;
@@ -172,8 +172,8 @@
             document.querySelectorAll('.approve-btn').forEach(button => {
                 button.addEventListener('click', (event) => {
                     const reviewId = event.target.dataset.reviewId;
-                    const isApproved = event.target.dataset.isApproved === 'true';
-                    handleApproval(reviewId, !isApproved);
+                    const is_approved = event.target.dataset.is_approved === 'true';
+                    handleApproval(reviewId, !is_approved);
                 });
             });
         }
@@ -185,7 +185,7 @@
             const categories = ['cleanliness', 'communication', 'respect_house_rules'];
             const categoryAverages = categories.map(cat => {
                 const totalRating = reviews.reduce((sum, review) => {
-                    const categoryRating = review.categoryRatings.find(c => c.category === cat);
+                    const categoryRating = review.category_ratings.find(c => c.category === cat);
                     return sum + (categoryRating ? categoryRating.rating : 0);
                 }, 0);
                 return reviews.length > 0 ? (totalRating / reviews.length / 2).toFixed(1) : 0;
@@ -326,9 +326,9 @@
             filteredReviews = allReviews.filter(review => {
                 const matchesRating = ratingFilter === '' || review.rating.toString() === ratingFilter;
                 const matchesType = typeFilter === '' || review.type === typeFilter;
-                const matchesListing = listingFilter === '' || review.listingName === listingFilter;
+                const matchesListing = listingFilter === '' || review.listing_name === listingFilter;
                 const matchesChannel = channelFilter === '' || review.channel === channelFilter;
-                const matchesApprovalStatus = approvalStatusFilter === '' || (approvalStatusFilter === 'approved' && review.isApproved === 1) || (approvalStatusFilter === 'pending' && review.isApproved === 0);
+                const matchesApprovalStatus = approvalStatusFilter === '' || (approvalStatusFilter === 'approved' && review.is_approved === 1) || (approvalStatusFilter === 'pending' && review.is_approved === 0);
                 
                 const reviewDate = new Date(review.date);
                 const matchesDateRange = (!startDate || reviewDate >= new Date(startDate)) && (!endDate || reviewDate <= new Date(endDate));
@@ -345,16 +345,16 @@
                         bValue = b.rating;
                         break;
                     case 'cleanliness':
-                        aValue = a.categoryRatings.find(c => c.category === 'cleanliness').rating;
-                        bValue = b.categoryRatings.find(c => c.category === 'cleanliness').rating;
+                        aValue = a.category_ratings.find(c => c.category === 'cleanliness').rating;
+                        bValue = b.category_ratings.find(c => c.category === 'cleanliness').rating;
                         break;
                     case 'communication':
-                        aValue = a.categoryRatings.find(c => c.category === 'communication').rating;
-                        bValue = b.categoryRatings.find(c => c.category === 'communication').rating;
+                        aValue = a.category_ratings.find(c => c.category === 'communication').rating;
+                        bValue = b.category_ratings.find(c => c.category === 'communication').rating;
                         break;
                     case 'respect_house_rules':
-                        aValue = a.categoryRatings.find(c => c.category === 'respect_house_rules').rating;
-                        bValue = b.categoryRatings.find(c => c.category === 'respect_house_rules').rating;
+                        aValue = a.category_ratings.find(c => c.category === 'respect_house_rules').rating;
+                        bValue = b.category_ratings.find(c => c.category === 'respect_house_rules').rating;
                         break;
                     default:
                         return 0; // No sort
@@ -372,7 +372,7 @@
             const metricsRating = document.getElementById('metrics-rating');
 
             if (listingFilter) {
-                const listingReviews = allReviews.filter(r => r.listingName === listingFilter);
+                const listingReviews = allReviews.filter(r => r.listing_name === listingFilter);
                 const totalReviews = listingReviews.length;
                 const totalRatingSum = listingReviews.reduce((sum, review) => sum + (review.rating), 0);
                 const avgRating = totalReviews > 0 ? (totalRatingSum / totalReviews).toFixed(1) : 0;
