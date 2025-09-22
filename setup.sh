@@ -16,4 +16,5 @@ make altinstall
 python3.13 --version
 pip3.13 --version
 
+cd ../
 pip3.13 install -r requirements.txt
