@@ -4,4 +4,4 @@ hostaway_api_key: "f94377ebbbb479490bb3ec364649168dc443dda2e4830facaf5de2e74ccc9
 hostaway_auth_endpoint: "https://api.hostaway.com/v1/accessTokens"
 hostaway_review_endpoint: "https://api.hostaway.com/v1/reviews"
 
-database_url: "sqlite:///./reviews.db"
+database_url: "sqlite:///:memory:"
