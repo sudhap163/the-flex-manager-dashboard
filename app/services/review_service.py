@@ -6,11 +6,11 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from typing import List, Dict, Any
 
-from models.review_model import Review
-from models.review_orm import ReviewORM
-from utils.log import logger
-from utils.config import configuration
-from utils.dummy_hostaway_review_data import DUMMY_HOSTAWAY_REVIEW_DATA
+from app.models.review_model import Review
+from app.models.review_orm import ReviewORM
+from app.utils.log import logger
+from app.utils.config import configuration
+from app.utils.dummy_hostaway_review_data import DUMMY_HOSTAWAY_REVIEW_DATA
 
 def get_all_approved_reviews(session: Session) -> List[Dict[str, Any]]:
     """Fetches all approved reviews from the database using SQLAlchemy."""

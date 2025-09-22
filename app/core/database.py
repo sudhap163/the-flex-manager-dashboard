@@ -2,9 +2,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from models.review_orm import Base
-from utils.log import logger
-from utils.config import configuration
+from app.models.review_orm import Base
+from app.utils.log import logger
+from app.utils.config import configuration
 
 # Create a SQLAlchemy engine
 engine = create_engine(configuration['database_url'], connect_args={"check_same_thread": False})

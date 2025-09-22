@@ -2,9 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from controllers import review_controller, html_controller
-from core.database import init_db
-from utils.log import logger
+from app.controllers import review_controller, html_controller
+from app.core.database import init_db
+from app.utils.log import logger
 
 import uvicorn
 
