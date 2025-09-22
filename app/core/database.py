@@ -7,7 +7,7 @@ from app.utils.log import logger
 import os
 
 # Create a SQLAlchemy engine
-engine = create_engine(os.getenv("DATABASE_URL"), connect_args={"check_same_thread": False}, echo=True)
+engine = create_engine(os.getenv("DATABASE_URL"))
 
 # Create a session local class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
