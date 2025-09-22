@@ -4,10 +4,10 @@ from sqlalchemy.orm import sessionmaker
 
 from app.models.review_orm import Base
 from app.utils.log import logger
-from app.utils.config import configuration
+import os
 
 # Create a SQLAlchemy engine
-engine = create_engine(configuration['database_url'], connect_args={"check_same_thread": False}, echo=True)
+engine = create_engine(os.getenv("DATABASE_URL"), connect_args={"check_same_thread": False}, echo=True)
 
 # Create a session local class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
