@@ -15,7 +15,7 @@
                 // Fetch approved reviews for a specific listing
                 const listingName = '189 Hoxton Street';
                 const encodedListingName = encodeURIComponent(listingName);
-                const response = await fetch(`http://127.0.0.1:8000/api/reviews/approved/${encodedListingName}`);
+                const response = await fetch(`/api/reviews/approved/${encodedListingName}`);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -133,7 +133,7 @@
         <!-- Image Gallery (Full Width) -->
         <div class="grid grid-cols-1 md:grid-cols-2 md:grid-rows-1 gap-4">
             <div class="md:col-span-1 md:row-span-2 relative overflow-hidden rounded-xl h-64 md:h-[500px]">
-                <img src="./images/living-room.webp" onerror="this.onerror=null;this.src='https://placehold.co/1200x800/e0e0e0/000000?text=Living+Room';" alt="Living room and dining area" class="w-full h-full object-cover">
+                <img src="/static/images/living-room.webp" onerror="this.onerror=null;this.src='https://placehold.co/1200x800/e0e0e0/000000?text=Living+Room';" alt="Living room and dining area" class="w-full h-full object-cover">
                 <div class="absolute top-4 right-4 bg-dark-green bg-opacity-70 backdrop-blur-sm text-white text-sm font-semibold px-3 py-1 rounded-full flex items-center space-x-1">
                     <span id="main-rating-value" class="text-white"></span> <span id="main-stars"></span>
                 </div>
@@ -141,19 +141,19 @@
             <div class="hidden md:grid md:col-span-1 grid-rows-2 gap-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div class="overflow-hidden rounded-xl h-64 md:h-[242px]">
-                        <img src="./images/bedroom1.webp" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e0e0/000000?text=Bedroom+1';" alt="Main bedroom" class="w-full h-full object-cover">
+                        <img src="/static/images/bedroom1.webp" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e0e0/000000?text=Bedroom+1';" alt="Main bedroom" class="w-full h-full object-cover">
                     </div>
                     <div class="overflow-hidden rounded-xl h-64 md:h-[242px]">
-                        <img src="./images/bedroom2.webp" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e0e0/000000?text=Bathroom';" alt="Bathroom" class="w-full h-full object-cover">
+                        <img src="/static/images/bedroom2.webp" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e0e0/000000?text=Bathroom';" alt="Bathroom" class="w-full h-full object-cover">
                     </div>
                 </div>
                 <!-- Third and Fourth images side-by-side -->
                 <div class="grid grid-cols-2 gap-4">
                     <div class="overflow-hidden rounded-xl h-64 md:h-[242px]">
-                        <img src="./images/bathroom1.webp" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e0e0/000000?text=Bedroom+2';" alt="Second bedroom" class="w-full h-full object-cover">
+                        <img src="/static/images/bathroom1.webp" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e0e0/000000?text=Bedroom+2';" alt="Second bedroom" class="w-full h-full object-cover">
                     </div>
                     <div class="relative overflow-hidden rounded-xl h-64 md:h-[242px]">
-                        <img src="./images/bathroom2.webp" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e0e0/000000?text=Kitchen';" alt="Kitchen" class="w-full h-full object-cover">
+                        <img src="/static/images/bathroom2.webp" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e0e0/000000?text=Kitchen';" alt="Kitchen" class="w-full h-full object-cover">
                         <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                             <button class="text-white text-lg font-semibold flex items-center space-x-2">
                                 <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">

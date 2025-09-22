@@ -21,7 +21,7 @@
             document.getElementById('dashboard-container').setAttribute('data-status', 'loading');
 
             try {
-                const response = await fetch('http://127.0.0.1:8000/api/reviews/hostaway');
+                const response = await fetch('/api/reviews/hostaway');
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -105,7 +105,7 @@
                     isApproved: isApproved ? 1 : 0,
                 };
                 
-                const response = await fetch('http://127.0.0.1:8000/api/reviews/save', {
+                const response = await fetch('/api/reviews/save', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -468,8 +468,8 @@
                 <span class="text-xl font-bold text-gray-900">Flex Living</span>
             </div>
             <nav class="flex items-center space-x-4">
-                <a href="index.html" class="text-gray-600 hover:text-dark-green font-medium">Property Page</a>
-                <a href="dashboard.html" class="text-dark-green font-bold">Dashboard</a>
+                <a href="/property_details/189 Hoxton Street" class="text-gray-600 hover:text-dark-green font-medium">Property Page</a>
+                <a href="/" class="text-dark-green font-bold">Dashboard</a>
             </nav>
         </div>
     </header>
