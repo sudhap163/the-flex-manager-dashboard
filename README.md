@@ -13,8 +13,10 @@ The project is organized into a clear, modular structure:
     * `models/`: Defines the data models (review_model.py).
     * `services/`: Business logic for data manipulation (review_service.py).
     * `utils/`: Utility functions for configuration and logging.
+    * `templates/`: HTML templates for the frontend, including the manager dashboard (index.html) and the property page (property_details.html).
+    * `static/images/`: Images displayed on the property_details page.
 
-* `views/`: Frontend files, including the manager dashboard (dashboard.html) and the property page (index.html).
+
 * `/` (root directory):
     * `.gitignore`: Specifies files to be ignored by Git.
     * `config.yaml`: Configuration file for the backend.
@@ -24,13 +26,15 @@ The project is organized into a clear, modular structure:
 
 ## Features
 
-### Frontend Dashboard (`dashboard.html`)
+### Frontend
+
+#### Manager Dashboard (`index.html`)
 
 The dashboard is a single-page web application designed for property managers.
 
 * **Live Data Fetching with Elegant Loading:** Automatically fetches review data from the backend API upon page load. A loading state with a spinner is displayed until the data is ready.
 
-* **Dynamic Metrics Card:** A single, dynamic card displays key metrics, switching between overall performance and per-property statistics based on filter selection.
+* **Dynamic Metrics and Trends Card:** A single, dynamic card displays key metrics and trends, switching between overall performance and per-property statistics based on filter selection.
 
 * **Interactive Filtering:** Filter reviews by listing, channel, overall rating, review type (guest-to-host or host-to-guest), date range, and approval status.
 
@@ -40,20 +44,26 @@ The dashboard is a single-page web application designed for property managers.
 
 * **Responsive Design:** The layout is fully responsive, providing an optimal viewing experience on all devices.
 
+#### Property Page (`property_details.html`)
+
+This page replicates the property details of The Flex. The reviews section is customised that shows only those reviews that have been approved by the manager.
+
 ### Backend API
 
-The Python backend provides the necessary API endpoints to support the dashboard's functionality.
+The Python backend provides the necessary API endpoints to support the required functionalities.
 
-* `GET /api/reviews/hostaway`: Fetches all review data.
+* `GET /api/reviews/hostaway`: Fetches all review data from Hostaway.
 
 * `POST /api/reviews/save`: Saves a review's approval status in the database.
 
+* `GET /reviews/approved/{listing_name}`: Approved ratings for given listing.
+
 ## How to Run
 1. **Start the Backend:**
-    1. Navigate to the project root and install all dependencies by running `pip install -r requirements.txt`
-    2. Run the Python backend using command `python app`. The server needs to be running and accessible at http://127.0.0.1:8000.
+    1. Navigate to the project root and install all dependencies by running `pip3 install -r requirements.txt`
+    2. Run the Python backend using command `python3 app`.
 2. **Open the Dashboard:**
-    1. Open the dashboard.html file in your web browser.
+    1. Open the index.html file in your web browser at http://0.0.0.0/
     
 The dashboard will automatically connect to the backend, fetch the data, and populate the tables and charts.
 
