@@ -3,4 +3,3 @@ pydantic
 sqlalchemy
 python-dotenv
 requests
-sqlite3
