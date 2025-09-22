@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Dict, Any
 from sqlalchemy.orm import Session
+from urllib.parse import unquote
 
 from app.core.database import get_db_connection
 from app.models.review_model import Review
@@ -24,7 +25,7 @@ def get_hostaway_reviews(session: Session = Depends(get_db_connection)):
 @router.get("/reviews/approved/{listing_name}", response_model=Dict[str, Any])
 def get_approved_reviews(listing_name: str, session: Session = Depends(get_db_connection)):
     """Returns a list of approved reviews for a specific listing."""
-    approved_reviews = review_service.get_approved_reviews_by_listing(listing_name, session)
+    approved_reviews = review_service.get_approved_reviews_by_listing(unquote(listing_name), session)
     return {"status": "success", "result": approved_reviews}
 
 @router.post("/reviews/save", response_model=Dict[str, Any])
