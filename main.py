@@ -27,7 +27,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(review_controller.router, prefix="/api")      # API routes
 app.include_router(html_controller.router)                       # HTML view routes
 
-# Initialize database
+# Initialize database, does not work on Serverless
 init_db()
 
 # App runner

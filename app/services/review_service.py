@@ -1,4 +1,5 @@
 import json
+import os
 import requests
 
 from pydantic import ValidationError
@@ -59,8 +60,8 @@ def get_hostaway_reviews(session: Session) -> List[Dict[str, Any]]:
     }
     token_data = {
         "grant_type": "client_credentials",
-        "client_id": configuration["hostaway_account_id"],
-        "client_secret": configuration["hostaway_api_key"],
+        "client_id": os.getenv("HOSTAWAY_ACCOUNT_ID"),
+        "client_secret": os.getenv("HOSTAWAY_API_KEY"),
         "scope": "general"
     }
     

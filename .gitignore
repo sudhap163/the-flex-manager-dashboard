@@ -220,3 +220,6 @@ reviews.db
 
 #MacOS
 *.DS_Store
+
+# env
+.env
