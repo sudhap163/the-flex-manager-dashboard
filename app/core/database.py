@@ -7,7 +7,7 @@ from app.utils.log import logger
 from app.utils.config import configuration
 
 # Create a SQLAlchemy engine
-engine = create_engine(configuration['database_url'], connect_args={"check_same_thread": False})
+engine = create_engine(configuration['database_url'], connect_args={"check_same_thread": False}, echo=True)
 
 # Create a session local class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
